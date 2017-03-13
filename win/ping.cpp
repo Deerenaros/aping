@@ -1,14 +1,16 @@
 #ifdef _WIN32
 
-#include "Ping_win.h"
+#include <stdio.h>
 #include <WinSock2.h>
 #include <wbemidl.h>
 #include <windows.h>
 #include <comdef.h>
 #include <winsock.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "Wbemuuid.lib")
+
+#include "minmax.h" 
+
+#include "../ping.h"
 
 IP_t GetDefaultGatewayIP()
 {
@@ -178,8 +180,8 @@ size_t Ping( const IP_t &ip )
 			goto cleanup;
 	}
 
-	static const int32_t packetSize = max( sizeof( ICMPHeader ), 32 );
-	uint8_t _sendBuf[packetSize];
+	int32_t packetSize = max( sizeof( ICMPHeader ), 32u );
+	uint8_t *_sendBuf = new uint8_t[packetSize];
 	ICMPHeader *sendBuf = (ICMPHeader*) _sendBuf;
 
 	sendBuf->type = ICMP_ECHO_REQUEST;
@@ -231,6 +233,7 @@ size_t Ping( const IP_t &ip )
 	}
 
 cleanup:
+	delete[] _sendBuf;
 	WSACleanup();
 	return ret;
 }

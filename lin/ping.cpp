@@ -1,14 +1,18 @@
 #ifndef _WIN32
 
-#include "Ping_lin.h"
-
-#define BUFSIZE 8192
+extern "C" {
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <sys/socket.h>
 #include <linux/rtnetlink.h>
 #include <unistd.h>
+}
+
 #include <iostream>
+
+#include "../ping.h"
+
+#define BUFSIZE 8192
 
 struct route_info {
 	in_addr dstAddr;
@@ -188,6 +192,7 @@ unsigned short checksum(void *b, int len)
 size_t Ping( const IP_t &ip )
 {
 	const int val=255;
+	int result = INV;
 	int i, sd;
 	struct packet pckt;
 	struct sockaddr_in r_addr;
@@ -204,7 +209,7 @@ size_t Ping( const IP_t &ip )
 
 	addr = &addr_ping;
 
-	sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP );//1/*proto->p_proto*/);
+	sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP );
 	if ( sd < 0 ) {
 		perror("socket");
 		return INV;
@@ -241,11 +246,11 @@ size_t Ping( const IP_t &ip )
 
 	if( recvfrom( sd, &pckt, sizeof( pckt ), 0, (struct sockaddr*) &r_addr, &len ) > 0 ) {
 		gettimeofday( &_end, NULL );
-		size_t end = _end.tv_sec * 1000000 + _end.tv_usec;
-		return end - start;
+		result = _end.tv_sec * 1000000 + _end.tv_usec - start;
 	}
-	
-	return INV;
+
+	close(sd);
+	return result;
 }
 
 #endif
